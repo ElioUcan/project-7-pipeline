@@ -1,6 +1,0 @@
-psycopg2-binary
-fastapi
-faker
-dotenv
-sqlalchemy
-uvicorn

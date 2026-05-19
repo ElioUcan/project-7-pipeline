@@ -1,0 +1,6 @@
+📊 Pipeline success vs failed rate (pie chart)
+📈 Average DAG duration over time (time series)
+⚡ API error rate per endpoint (bar chart)
+🤖 Model prediction label distribution (pie chart)
+🕐 p95 API response time per hour (time series)     
+http://localhost:3000/
