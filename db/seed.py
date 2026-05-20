@@ -16,12 +16,16 @@ dag_name = ["pipe_ml", "pipe_finance", "pipe_general"]
 status = ["success", "failed"]
 models = ["analyst_ML", "leader_ML"]
 duration = random.uniform(1.0, 10.5)
-
+label = ["healthy", "degraded", "critical"]
 #api_requests table connection with false data
 with psycopg2.connect(host=os.getenv("POSTGRES_HOST"),port=5432,database=os.getenv("POSTGRES_DB"),user=os.getenv("POSTGRES_USER"),password=os.getenv("POSTGRES_PASSWORD")) as conn:
     with conn.cursor() as cur:
         for _ in range(100):
-            row = (random.choice(endpoints),random.choice(api_method) ,random.choice(status_code),random.uniform(0.1,5.5), fake.date_time())
+            row = (random.choice(endpoints),
+                   random.choice(api_method) ,
+                   random.choice(status_code),
+                   random.uniform(0.1,5.5), 
+                   fake.date_time_between(start_date='-30d', end_date='now'))
 
             cur.execute("INSERT INTO api_requests (endpoint, method, status_code, response_time_ms, requested_at) VALUES (%s, %s, %s, %s, %s);", row)
 
@@ -29,7 +33,13 @@ with psycopg2.connect(host=os.getenv("POSTGRES_HOST"),port=5432,database=os.gete
 with psycopg2.connect(host=os.getenv("POSTGRES_HOST"),port=5432,database=os.getenv("POSTGRES_DB"),user=os.getenv("POSTGRES_USER"),password=os.getenv("POSTGRES_PASSWORD")) as conn:
     with conn.cursor() as cur:
         for _ in range(100):
-            row = (random.choice(dag_name), fake.date_time(),fake.date_time()+ timedelta(seconds=duration),random.uniform(1.0,10.5), random.choice(status), random.randint(1,5), fake.date_time())
+            row = (random.choice(dag_name), 
+                   fake.date_time_between(start_date='-30d', end_date='now'),
+                   fake.date_time_between(start_date='-30d', end_date='now')+ timedelta(seconds=duration),
+                   random.uniform(1.0,10.5), 
+                   random.choice(status), 
+                   random.randint(1,5), 
+                   fake.date_time_between(start_date='-30d', end_date='now'))
 
             cur.execute("INSERT INTO pipeline_runs (dag_name, started_at, end_at,duration,status,retries,created_at) VALUES (%s, %s, %s, %s, %s, %s,%s);", row)
        
@@ -37,7 +47,11 @@ with psycopg2.connect(host=os.getenv("POSTGRES_HOST"),port=5432,database=os.gete
 with psycopg2.connect(host=os.getenv("POSTGRES_HOST"),port=5432,database=os.getenv("POSTGRES_DB"),user=os.getenv("POSTGRES_USER"),password=os.getenv("POSTGRES_PASSWORD")) as conn:
     with conn.cursor() as cur:
         for _ in range(100):
-            row = (random.choice(models),random.choice(["healthy", "degraded", "critical"]) ,random.uniform(0.1,5.5), random.choice(status), fake.date_time())
+            row = (random.choice(models),
+                   random.choice(label) ,
+                   random.uniform(0.1,5.5), 
+                   random.choice(status), 
+                   fake.date_time_between(start_date='-30d', end_date='now'))
 
             cur.execute("INSERT INTO model_inference (model_name, label, latency_ms, status, requested_at) VALUES (%s, %s, %s, %s, %s);", row)
        

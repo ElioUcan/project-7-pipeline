@@ -3,3 +3,4 @@ dotenv
 sqlalchemy
 uvicorn
 psycopg2-binary
+python-jose
