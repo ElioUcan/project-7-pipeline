@@ -1,163 +1,42 @@
 # ML Pipeline Monitoring API
 
-A containerized observability platform for tracking ML pipeline runs, model inference metrics, and API health — with a live Grafana dashboard backed by PostgreSQL.
+## 🛠️ Technologies
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-## Overview
+## ✨ Features
+- Track pipeline run history: DAG name, status, duration, and retry count
+- Log model inference records: prediction label, latency, and per-model status
+- Monitor API health: per-endpoint request logs with response times and status codes
+- JWT authentication (HS256, 30-minute token expiration) on all routes
+- Live Grafana dashboard connected directly to PostgreSQL for real-time charts
+- One-shot seeder service that populates the database with synthetic data on startup
 
-This project exposes a FastAPI service that records and queries operational data across three domains:
+## 🎯 Uses
+Observability platform for ML systems, demonstrating how to track pipeline execution, model performance, and API health in a single dashboard. Built as project #7 in a Data/AI/MLOps engineering portfolio to show production-level monitoring patterns.
 
-- **Pipeline runs** — DAG execution history with status, duration, and retry counts
-- **Model inference** — prediction labels, latency, and status per model
-- **API health** — per-endpoint request logs with response times and status codes
+## 🔧 Process
+FastAPI exposes REST endpoints under `/api/v1` that write and query operational data across three PostgreSQL tables. Grafana connects directly to the database for low-latency chart rendering. Docker Compose orchestrates four services: `db`, `app`, `dashboard`, and `seeder`. The `seeder` runs once on startup to populate sample data, so the dashboard is functional immediately after `docker compose up`.
 
-Grafana connects directly to the database to render real-time charts for each domain.
+## 💡 Learnings
+- Designing metrics schemas for ML observability (separating pipeline, inference, and API concerns into distinct tables)
+- JWT authentication with FastAPI's dependency injection system
+- Connecting Grafana directly to PostgreSQL as a datasource instead of building a separate metrics API
+- Using Docker Compose network segmentation (`frontend` / `backend`) to control service visibility
 
-## Architecture
-
-```
-┌──────────┐     ┌─────────────┐     ┌──────────────┐
-│  Client  │────▶│  FastAPI    │────▶│  PostgreSQL   │
-└──────────┘     │  (port 5600)│     │  (port 5432)  │
-                 └─────────────┘     └──────┬───────┘
-                                            │
-                 ┌─────────────┐            │
-                 │   Grafana   │────────────┘
-                 │  (port 3000)│
-                 └─────────────┘
-```
-
-**Services (Docker Compose)**
-
-| Service     | Image / Build | Role                                      |
-|-------------|---------------|-------------------------------------------|
-| `db`        | postgres:15   | Primary data store                        |
-| `app`       | `./app`       | FastAPI REST API                          |
-| `dashboard` | grafana/grafana | Visualization layer                     |
-| `seeder`    | `./db`        | One-shot seed job to populate sample data |
-
-Networks: `frontend` (app ↔ dashboard) and `backend` (app ↔ db ↔ seeder).
-
-## API Reference
-
-All routes are prefixed with `/api/v1` and require a Bearer token.
-
-### Authentication
-
-```
-POST /api/v1/auth/token
-```
-
-Request body:
-```json
-{ "username": "admin", "password": "secret" }
-```
-
-Response:
-```json
-{ "access_token": "<jwt>", "token_type": "bearer" }
-```
-
-Token expires in 30 minutes (HS256).
-
----
-
-### Pipeline Runs
-
-```
-GET /api/v1/pipelines?hours=24
-```
-
-Returns all rows from `pipeline_runs` within the last `hours` hours.
-
-| Field        | Type      | Description                      |
-|-------------|-----------|----------------------------------|
-| `dag_name`  | string    | Name of the DAG                  |
-| `started_at`| timestamp | Run start time                   |
-| `end_at`    | timestamp | Run end time                     |
-| `duration`  | int       | Duration in seconds              |
-| `status`    | string    | `success` / `failed` / etc.      |
-| `retries`   | int       | Number of retries                |
-
----
-
-### Model Inference
-
-```
-GET /api/v1/inference?hours=24
-```
-
-Returns all rows from `model_inference` within the last `hours` hours.
-
-| Field          | Type      | Description                   |
-|---------------|-----------|-------------------------------|
-| `model_name`  | string    | Model identifier              |
-| `label`       | string    | Predicted label               |
-| `latency_ms`  | float     | Inference latency (ms)        |
-| `status`      | string    | `success` / `error`           |
-| `requested_at`| timestamp | Request timestamp             |
-
----
-
-### API Health
-
-```
-GET /api/v1/health
-```
-
-Returns the health status of the API.
-
-## Database Schema
-
-Three tables are initialized via `db/init.sql` on first container start:
-
-```sql
-pipeline_runs   -- DAG execution records
-model_inference -- Model prediction records
-api_requests    -- HTTP request logs
-```
-
-Sample data is inserted by the `seeder` service using `db/seed.py`.
-
-## Getting Started
-
-### Prerequisites
-
-- Docker & Docker Compose
-
-### Configuration
-
-Copy `.env.example` to `.env` and fill in your values:
+## ▶️ Running the project
 
 ```bash
 cp .env.example .env
-```
-
-```env
-POSTGRES_DB=
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-POSTGRES_PORT=
-```
-
-### Run
-
-```bash
+# fill in POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT
 docker compose up --build
 ```
 
-| Service   | URL                      |
-|-----------|--------------------------|
-| API       | http://localhost:5600     |
-| API Docs  | http://localhost:5600/docs|
-| Grafana   | http://localhost:3000     |
-
-The seeder runs once on startup and populates the database with synthetic data.
-
-## Tech Stack
-
-- **FastAPI** — REST API framework
-- **SQLAlchemy** — Database ORM
-- **PostgreSQL 15** — Relational database
-- **Grafana** — Dashboard and visualization
-- **Docker Compose** — Container orchestration
-- **python-jose** — JWT authentication
+| Service | URL |
+|---------|-----|
+| API | http://localhost:5600 |
+| API Docs | http://localhost:5600/docs |
+| Grafana | http://localhost:3000 |
